@@ -11,7 +11,7 @@
         .blue-gradient { background: linear-gradient(135deg, #0066FF 0%, #00CCFF 100%); }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(0, 102, 255, 0.1); }
         #admin-panel { display: none; z-index: 9999; }
-        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 10000; items-center; justify-center; }
+        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 10000; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -24,7 +24,7 @@
     <nav class="sticky top-0 bg-white/90 backdrop-blur-md border-b border-blue-100 z-50 shadow-sm">
         <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <img id="logo-display" src="SHUDTV.png" class="h-10 w-auto">
+                <img id="logo-display" src="" class="h-10 w-auto">
                 <div class="flex flex-col">
                     <span class="font-bold text-blue-600 text-lg leading-none">SHUDTV</span>
                     <span class="text-[8px] font-bold text-blue-400 uppercase tracking-widest mt-1">Applied Biology Television</span>
@@ -59,12 +59,12 @@
                 <div>
                     <h3 class="font-bold text-blue-500 mb-4">Biểu tượng Gốc</h3>
                     <img id="about-img-v1" class="rounded-2xl border shadow-md w-full bg-white p-4 h-48 object-contain">
-                    <p id="about-text-v1" class="mt-4 text-gray-600 text-sm whitespace-pre-wrap"></p>
+                    <p id="about-text-v1" class="mt-4 text-gray-600 text-sm whitespace-pre-wrap">Logo truyền thống với biểu tượng cấu trúc ADN và ống nghiệm, đại diện cho nền tảng nghiên cứu Sinh học ứng dụng.</p>
                 </div>
                 <div>
                     <h3 class="font-bold text-blue-500 mb-4">Phiên bản Cách điệu</h3>
                     <img id="about-img-v2" class="rounded-2xl border shadow-md w-full bg-white p-4 h-48 object-contain">
-                    <p id="about-text-v2" class="mt-4 text-gray-600 text-sm whitespace-pre-wrap"></p>
+                    <p id="about-text-v2" class="mt-4 text-gray-600 text-sm whitespace-pre-wrap">Thiết kế tối giản, hiện đại hướng tới kỷ nguyên số và công nghệ sinh học 4.0.</p>
                 </div>
             </div>
         </div>
@@ -79,8 +79,10 @@
             <div class="p-6 overflow-y-auto space-y-6">
                 <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 space-y-3">
                     <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Cài đặt Thương hiệu</p>
+                    <label class="text-[10px] text-gray-500">Logo gốc:</label>
                     <input type="file" id="up-logo" class="text-xs block w-full mb-2">
                     <textarea id="in-v1" placeholder="Giới thiệu logo gốc..." class="w-full p-2 border rounded-xl text-sm outline-none"></textarea>
+                    <label class="text-[10px] text-gray-500">Logo cách điệu:</label>
                     <input type="file" id="up-v2" class="text-xs block w-full mb-2">
                     <textarea id="in-v2" placeholder="Giới thiệu logo cách điệu..." class="w-full p-2 border rounded-xl text-sm outline-none"></textarea>
                 </div>
@@ -96,11 +98,17 @@
     </div>
 
     <script>
-        // CẤU HÌNH KHO LƯU TRỮ ONLINE (DÙNG CHUNG)
-        const BIN_ID = '69d54381856a6821890b2d65'; // Tui đã tạo sẵn kho cho ní
-        const API_KEY = '$2a$10$eczRwhEPgbw6xxN28NmTHeB67GlPQlwFtgFpUQxhHAK2gsGW.ysGi'; // Key bảo mật
+        const BIN_ID = '69d54381856a6821890b2d65'; 
+        const API_KEY = '$2a$10$eczRwhEPgbw6xxN28NmTHeB67GlPQlwFtgFpUQxhHAK2gsGW.ysGi'; 
         
-        let db = { logo: '', v1T: '', v2T: '', v2I: '', posts: [] };
+        // Tui đã tích hợp ảnh vào database mặc định này cho ní nè
+        let db = { 
+            logo: 'https://i.ibb.co/LhyM66D/SHUDTV-Logo-Goc.png', 
+            v1T: 'Logo chính thức SHUDTV - Ho Chi Minh City University of Education.', 
+            v2I: 'https://i.ibb.co/fVP80mF/SHUDTV-Logo-Stylized.png', 
+            v2T: 'Phiên bản nhận diện số hiện đại.', 
+            posts: [] 
+        };
 
         async function loadData() {
             document.getElementById('loading').style.display = 'flex';
@@ -111,7 +119,10 @@
                 const data = await res.json();
                 db = data.record;
                 render();
-            } catch (e) { alert("Lỗi kết nối vệ tinh!"); }
+            } catch (e) { 
+                console.log("Dùng dữ liệu nội bộ!");
+                render(); 
+            }
             document.getElementById('loading').style.display = 'none';
         }
 
@@ -121,9 +132,15 @@
 
             document.getElementById('loading').style.display = 'flex';
             
-            // Xử lý dữ liệu thương hiệu
-            db.v1T = document.getElementById('in-v1').value;
-            db.v2T = document.getElementById('in-v2').value;
+            // Cập nhật text thương hiệu
+            db.v1T = document.getElementById('in-v1').value || db.v1T;
+            db.v2T = document.getElementById('in-v2').value || db.v2T;
+
+            // Xử lý upload ảnh thương hiệu mới (nếu có chọn file)
+            const logoFile = document.getElementById('up-logo').files[0];
+            const v2File = document.getElementById('up-v2').files[0];
+            if(logoFile) db.logo = await toBase64(logoFile);
+            if(v2File) db.v2I = await toBase64(v2File);
 
             // Xử lý tin mới
             const t = document.getElementById('post-t').value;
@@ -132,7 +149,13 @@
 
             if(t && c) {
                 const mediaBase64 = f ? await toBase64(f) : null;
-                db.posts.unshift({ title: t, content: c, media: mediaBase64, type: f ? f.type : null, time: new Date().toLocaleString('vi-VN') });
+                db.posts.unshift({ 
+                    title: t, 
+                    content: c, 
+                    media: mediaBase64, 
+                    type: f ? f.type : null, 
+                    time: new Date().toLocaleString('vi-VN') 
+                });
             }
 
             try {
@@ -155,11 +178,15 @@
         }
 
         function render() {
-            if(db.logo) document.getElementById('logo-display').src = db.logo;
-            document.getElementById('about-img-v1').src = db.logo || 'SHUDTV.png';
+            document.getElementById('logo-display').src = db.logo;
+            document.getElementById('about-img-v1').src = db.logo;
             document.getElementById('about-text-v1').innerText = db.v1T;
-            document.getElementById('about-img-v2').src = db.v2I || '';
+            document.getElementById('about-img-v2').src = db.v2I;
             document.getElementById('about-text-v2').innerText = db.v2T;
+
+            // Đổ dữ liệu vào Admin Panel để ní dễ sửa
+            document.getElementById('in-v1').value = db.v1T;
+            document.getElementById('in-v2').value = db.v2T;
 
             document.getElementById('feed-container').innerHTML = db.posts.map((p, idx) => `
                 <div class="bg-white rounded-3xl shadow-sm border p-6 border-l-8 border-l-blue-600">
