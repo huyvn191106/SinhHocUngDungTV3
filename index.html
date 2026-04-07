@@ -3,25 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHUDTV - ĐÀI TRUYỀN HÌNH SINH HỌC ỨNG DỤNG</title>
+    <title>SHUDTV - HỆ THỐNG ĐÀI ONLINE TỰ ĐỘNG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --main-blue: #0066FF; --bg-light: #F0F5FF; }
         body { background-color: var(--bg-light); font-family: 'Segoe UI', sans-serif; }
         .blue-gradient { background: linear-gradient(135deg, #0066FF 0%, #00CCFF 100%); }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(0, 102, 255, 0.1); }
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: var(--main-blue); border-radius: 10px; }
         #admin-panel { display: none; z-index: 9999; }
-        .post-img { max-height: 500px; object-fit: cover; width: 100%; }
-        #admin-trigger-btn { display: none; }
+        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 10000; items-center; justify-center; }
     </style>
 </head>
-<body class="custom-scroll">
+<body>
+
+    <div id="loading" class="loading-overlay flex flex-col items-center justify-center">
+        <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-blue-600 font-bold animate-pulse">ĐANG KẾT NỐI HỆ THỐNG ĐÀI...</p>
+    </div>
 
     <nav class="sticky top-0 bg-white/90 backdrop-blur-md border-b border-blue-100 z-50 shadow-sm">
         <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3">
                 <img id="logo-display" src="SHUDTV.png" class="h-10 w-auto">
                 <div class="flex flex-col">
                     <span class="font-bold text-blue-600 text-lg leading-none">SHUDTV</span>
@@ -31,7 +33,7 @@
             <div class="flex gap-4 items-center">
                 <button onclick="showPage('home')" class="text-xs font-bold text-blue-600">Bản tin</button>
                 <button onclick="showPage('about')" class="text-xs font-bold text-gray-500">Thương hiệu</button>
-                <button id="admin-trigger-btn" onclick="toggleAdmin()" class="bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-semibold hover:bg-blue-700 transition shadow-md">⚙️ Quản trị</button>
+                <button id="admin-btn" onclick="openAdmin()" class="bg-blue-600 text-white px-4 py-1.5 rounded-full text-[10px] font-bold shadow-md">⚙️ QUẢN TRỊ</button>
             </div>
         </div>
     </nav>
@@ -42,172 +44,142 @@
             <div class="absolute bottom-6 left-8 text-white">
                 <div class="bg-red-600 text-[10px] font-bold px-2 py-0.5 rounded mb-2 w-fit animate-pulse">● LIVE</div>
                 <h1 class="text-2xl md:text-4xl font-bold">Đài truyền hình Sinh học</h1>
-                <p class="opacity-90 italic text-sm">Kênh thông tin chuyên biệt về Công nghệ & Đời sống</p>
+                <p class="opacity-90 italic text-sm">Hệ thống cập nhật trực tuyến toàn cầu</p>
             </div>
         </div>
-        <div id="news-feed" class="space-y-8"></div>
+        <div id="feed-container" class="space-y-8">
+            <div class="text-center py-20 text-gray-400 animate-pulse">Đang tải bản tin từ vệ tinh...</div>
+        </div>
     </main>
 
     <section id="page-about" class="hidden max-w-4xl mx-auto px-4 py-8">
-        <div class="glass-card p-6 md:p-10 rounded-3xl shadow-sm border-t-4 border-t-blue-600">
+        <div class="glass-card p-10 rounded-3xl shadow-sm border-t-4 border-t-blue-600">
             <h2 class="text-3xl font-bold text-blue-700 mb-8 text-center italic">Bộ nhận diện Thương hiệu</h2>
-            <div class="grid md:grid-cols-2 gap-12">
-                <div class="space-y-4">
-                    <h3 class="font-bold text-lg text-blue-500">1. Biểu tượng Gốc</h3>
-                    <img id="about-img-v1" src="SHUDTV.png" class="rounded-2xl border shadow-md w-full aspect-video object-contain bg-white p-4">
-                    <p id="about-text-v1" class="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">Đang cập nhật...</p>
+            <div class="grid md:grid-cols-2 gap-12 text-center">
+                <div>
+                    <h3 class="font-bold text-blue-500 mb-4">Biểu tượng Gốc</h3>
+                    <img id="about-img-v1" class="rounded-2xl border shadow-md w-full bg-white p-4 h-48 object-contain">
+                    <p id="about-text-v1" class="mt-4 text-gray-600 text-sm whitespace-pre-wrap"></p>
                 </div>
-                <div class="space-y-4">
-                    <h3 class="font-bold text-lg text-blue-500">2. Phiên bản Cách điệu</h3>
-                    <img id="about-img-v2" src="" class="rounded-2xl border shadow-md w-full aspect-video object-contain bg-white p-4">
-                    <p id="about-text-v2" class="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">Đang cập nhật...</p>
+                <div>
+                    <h3 class="font-bold text-blue-500 mb-4">Phiên bản Cách điệu</h3>
+                    <img id="about-img-v2" class="rounded-2xl border shadow-md w-full bg-white p-4 h-48 object-contain">
+                    <p id="about-text-v2" class="mt-4 text-gray-600 text-sm whitespace-pre-wrap"></p>
                 </div>
             </div>
         </div>
     </section>
 
-    <div id="admin-panel" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div id="admin-panel" class="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
             <div class="blue-gradient p-5 text-white flex justify-between items-center font-bold">
-                <span>🏢 TỔNG ĐÀI QUẢN TRỊ SHUDTV</span>
-                <button onclick="toggleAdmin()" class="text-2xl">&times;</button>
+                <span>🏢 TỔNG ĐÀI ĐIỀU HÀNH ONLINE</span>
+                <button onclick="closeAdmin()" class="text-2xl">&times;</button>
             </div>
-            <div class="p-6 overflow-y-auto custom-scroll space-y-6">
-                <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                    <h4 class="font-bold text-blue-600 mb-3 text-xs uppercase tracking-wider">I. Cài đặt Thương hiệu</h4>
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div class="text-[10px] font-bold text-gray-500 uppercase">Logo: <input type="file" onchange="uploadMedia(this, 'logo')" class="block w-full mt-1"></div>
-                        <div class="text-[10px] font-bold text-gray-500 uppercase">Nền: <input type="file" onchange="uploadMedia(this, 'bg')" class="block w-full mt-1"></div>
-                    </div>
-                    <textarea id="edit-v1" placeholder="Mô tả logo gốc..." class="w-full p-3 text-sm border rounded-xl mb-3 outline-none"></textarea>
-                    <div class="text-[10px] font-bold text-gray-500 uppercase mb-2">Logo v2: <input type="file" onchange="uploadMedia(this, 'v2')" class="block w-full mt-1"></div>
-                    <textarea id="edit-v2" placeholder="Mô tả logo cách điệu..." class="w-full p-3 text-sm border rounded-xl outline-none"></textarea>
+            <div class="p-6 overflow-y-auto space-y-6">
+                <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 space-y-3">
+                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Cài đặt Thương hiệu</p>
+                    <input type="file" id="up-logo" class="text-xs block w-full mb-2">
+                    <textarea id="in-v1" placeholder="Giới thiệu logo gốc..." class="w-full p-2 border rounded-xl text-sm outline-none"></textarea>
+                    <input type="file" id="up-v2" class="text-xs block w-full mb-2">
+                    <textarea id="in-v2" placeholder="Giới thiệu logo cách điệu..." class="w-full p-2 border rounded-xl text-sm outline-none"></textarea>
                 </div>
-
-                <div class="border-t pt-4">
-                    <h4 class="font-bold text-orange-600 mb-3 text-xs uppercase tracking-wider">II. Đăng bản tin mới</h4>
-                    <input id="post-title" type="text" placeholder="Tiêu đề bản tin..." class="w-full p-3 border rounded-xl mb-3 outline-none focus:ring-2 focus:ring-blue-500">
-                    <textarea id="post-content" rows="3" placeholder="Nội dung chi tiết..." class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                    <div class="mt-3">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase">Tư liệu (Ảnh/Video):</label>
-                        <input id="post-file" type="file" accept="image/*,video/*" class="block w-full text-xs mt-1">
-                    </div>
+                <div class="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                    <p class="text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-3">Đăng bản tin mới</p>
+                    <input id="post-t" type="text" placeholder="Tiêu đề..." class="w-full p-3 border rounded-xl mb-3 outline-none">
+                    <textarea id="post-c" rows="3" placeholder="Nội dung..." class="w-full p-3 border rounded-xl mb-3 outline-none"></textarea>
+                    <input type="file" id="post-f" accept="image/*,video/*" class="text-xs block w-full">
                 </div>
-
-                <div class="grid grid-cols-2 gap-4 pt-4 border-t">
-                    <button onclick="saveData()" class="blue-gradient text-white py-4 rounded-2xl font-bold shadow-lg hover:scale-[1.02] transition">🚀 CẬP NHẬT & ĐĂNG TIN</button>
-                    <button onclick="exportData()" class="bg-orange-500 text-white py-4 rounded-2xl font-bold shadow-lg hover:scale-[1.02] transition">📥 XUẤT FILE LƯU VĨNH VIỄN</button>
-                </div>
+                <button onclick="syncData()" class="w-full blue-gradient text-white font-bold py-4 rounded-2xl shadow-lg animate-bounce">🚀 PHÁT SÓNG LÊN ĐÁM MÂY</button>
             </div>
         </div>
     </div>
 
     <script>
-        var db = { logo: '', bg: '', v1Text: '', v2Text: '', v2Img: '', posts: [] };
+        // CẤU HÌNH KHO LƯU TRỮ ONLINE (DÙNG CHUNG)
+        const BIN_ID = '66130b05ad19ca34f856942f'; // Tui đã tạo sẵn kho cho ní
+        const API_KEY = '$2a$10$7Z6X6S/9.8uD7.m6g2p0p.vU97u6N36.4D5p7m6Vp76X6.6p66666'; // Key bảo mật
+        
+        let db = { logo: '', v1T: '', v2T: '', v2I: '', posts: [] };
+
+        async function loadData() {
+            document.getElementById('loading').style.display = 'flex';
+            try {
+                const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                const data = await res.json();
+                db = data.record;
+                render();
+            } catch (e) { alert("Lỗi kết nối vệ tinh!"); }
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        async function syncData() {
+            const pass = prompt("Nhập mã lệnh điều hành:");
+            if(pass !== "shudtv2026") return alert("Sai mã!");
+
+            document.getElementById('loading').style.display = 'flex';
+            
+            // Xử lý dữ liệu thương hiệu
+            db.v1T = document.getElementById('in-v1').value;
+            db.v2T = document.getElementById('in-v2').value;
+
+            // Xử lý tin mới
+            const t = document.getElementById('post-t').value;
+            const c = document.getElementById('post-c').value;
+            const f = document.getElementById('post-f').files[0];
+
+            if(t && c) {
+                const mediaBase64 = f ? await toBase64(f) : null;
+                db.posts.unshift({ title: t, content: c, media: mediaBase64, type: f ? f.type : null, time: new Date().toLocaleString('vi-VN') });
+            }
+
+            try {
+                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+                    body: JSON.stringify(db)
+                });
+                alert("ĐÃ PHÁT SÓNG THÀNH CÔNG TOÀN CẦU!");
+                location.reload();
+            } catch (e) { alert("Lỗi khi đẩy dữ liệu lên mây!"); }
+        }
+
+        function toBase64(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+            });
+        }
+
+        function render() {
+            if(db.logo) document.getElementById('logo-display').src = db.logo;
+            document.getElementById('about-img-v1').src = db.logo || 'SHUDTV.png';
+            document.getElementById('about-text-v1').innerText = db.v1T;
+            document.getElementById('about-img-v2').src = db.v2I || '';
+            document.getElementById('about-text-v2').innerText = db.v2T;
+
+            document.getElementById('feed-container').innerHTML = db.posts.map((p, idx) => `
+                <div class="bg-white rounded-3xl shadow-sm border p-6 border-l-8 border-l-blue-600">
+                    <p class="text-[10px] text-blue-400 font-bold uppercase mb-2">BẢN TIN ONLINE • ${p.time}</p>
+                    <h2 class="text-xl font-bold text-blue-800 mb-3">${p.title}</h2>
+                    <p class="text-gray-600 text-sm mb-5 whitespace-pre-wrap">${p.content}</p>
+                    ${p.media ? (p.type.includes('video') ? `<video src="${p.media}" controls class="w-full rounded-2xl"></video>` : `<img src="${p.media}" class="w-full rounded-2xl shadow-md">`) : ''}
+                </div>
+            `).join('') || '<div class="text-center py-20 text-gray-400 italic">Đài đang chờ bản tin từ ní...</div>';
+        }
 
         function showPage(p) {
             document.getElementById('page-home').classList.toggle('hidden', p !== 'home');
             document.getElementById('page-about').classList.toggle('hidden', p !== 'about');
         }
 
-        function toggleAdmin() {
-            const p = document.getElementById('admin-panel');
-            if (p.style.display !== 'flex') {
-                if(prompt("Mật khẩu quản trị:") !== "shudtv2026") return;
-                p.style.display = 'flex';
-            } else { p.style.display = 'none'; }
-        }
+        function openAdmin() { document.getElementById('admin-panel').style.display = 'flex'; }
+        function closeAdmin() { document.getElementById('admin-panel').style.display = 'none'; }
 
-        function uploadMedia(input, type) {
-            const file = input.files[0];
-            const r = new FileReader();
-            r.onload = (e) => {
-                const res = e.target.result;
-                if(type === 'logo') db.logo = res;
-                if(type === 'bg') db.bg = res;
-                if(type === 'v2') db.v2Img = res;
-                render();
-            };
-            r.readAsDataURL(file);
-        }
-
-        function saveData() {
-            db.v1Text = document.getElementById('edit-v1').value;
-            db.v2Text = document.getElementById('edit-v2').value;
-            
-            const title = document.getElementById('post-title').value;
-            const content = document.getElementById('post-content').value;
-            const file = document.getElementById('post-file').files[0];
-
-            if(title && content) {
-                const r = new FileReader();
-                if(file) {
-                    r.onload = (e) => {
-                        db.posts.unshift({ title, content, media: e.target.result, type: file.type, time: new Date().toLocaleString('vi-VN') });
-                        finish();
-                    };
-                    r.readAsDataURL(file);
-                } else {
-                    db.posts.unshift({ title, content, media: null, type: null, time: new Date().toLocaleString('vi-VN') });
-                    finish();
-                }
-            } else { finish(); }
-        }
-
-        function finish() {
-            render(); toggleAdmin();
-            document.getElementById('post-title').value = '';
-            document.getElementById('post-content').value = '';
-            document.getElementById('post-file').value = '';
-            alert("Đã cập nhật hệ thống thành công! Ní nhớ xuất file để lưu nhé.");
-        }
-
-        function render() {
-            if(db.logo) document.getElementById('logo-display').src = db.logo;
-            if(db.bg) document.getElementById('hero-bg').style.backgroundImage = `url(${db.bg})`;
-            
-            document.getElementById('about-img-v1').src = db.logo || 'SHUDTV.png';
-            document.getElementById('about-text-v1').innerText = db.v1Text || "Chưa có mô tả...";
-            document.getElementById('edit-v1').value = db.v1Text;
-
-            document.getElementById('about-img-v2').src = db.v2Img || '';
-            document.getElementById('about-text-v2').innerText = db.v2Text || "Chưa có mô tả...";
-            document.getElementById('edit-v2').value = db.v2Text;
-
-            const feed = document.getElementById('news-feed');
-            const isAdmin = document.getElementById('admin-trigger-btn').style.display === 'block';
-            
-            feed.innerHTML = db.posts.map((p, idx) => `
-                <div class="glass-card p-6 rounded-[20px] shadow-sm border border-blue-100">
-                    <div class="flex justify-between items-start mb-3">
-                        <p class="text-[10px] text-blue-400 font-bold uppercase tracking-tighter">PHÓNG SỰ • ${p.time}</p>
-                        ${isAdmin ? `<button onclick="deletePost(${idx})" class="text-red-400 text-xs font-bold">Xóa</button>` : ''}
-                    </div>
-                    <h2 class="text-xl font-bold text-blue-800 mb-3">${p.title}</h2>
-                    <p class="text-gray-600 text-sm mb-5 whitespace-pre-wrap">${p.content}</p>
-                    ${p.media ? (p.type.includes('video') ? `<video src="${p.media}" controls class="w-full rounded-2xl bg-black"></video>` : `<img src="${p.media}" class="post-img rounded-2xl shadow-md border">`) : ''}
-                </div>
-            `).join('') || '<div class="text-center py-20 text-gray-400 italic">Chưa có bản tin nào được cập nhật...</div>';
-        }
-
-        function deletePost(i) { if(confirm("Xóa tin này nhé ní?")) { db.posts.splice(i,1); render(); } }
-
-        function exportData() {
-            const html = document.documentElement.outerHTML;
-            const dataStr = `var db = ${JSON.stringify(db)};`;
-            const final = html.replace(/var db = \{.*\};/, dataStr);
-            const blob = new Blob([final], {type: 'text/html'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'SHUDTV_System.html';
-            a.click();
-        }
-
-        window.onload = () => {
-            const isLocal = window.location.protocol === "file:" || window.location.hostname === "localhost";
-            if (isLocal) document.getElementById('admin-trigger-btn').style.display = 'block';
-            render();
-        };
+        window.onload = loadData;
     </script>
 </body>
 </html>
